@@ -13,7 +13,7 @@ if not api_key:
 
 client = anthropic.Anthropic(api_key=api_key)
 
-def agentic_code_evaluation(code_str: str, max_attempts: int = 3) -> dict:
+def agentic_code_evaluation(code_str: str, max_attempts: int = 3, feedback: str | None = None) -> dict:
     prompt = f"""You are a senior software engineer reviewing code.
                 Analyze the code and return:
                 1. What the code is trying to do.
@@ -22,6 +22,8 @@ def agentic_code_evaluation(code_str: str, max_attempts: int = 3) -> dict:
                 4. A confidence score from 1 to 10 on the accuracy of your analysis.
 
                 Only report bugs supported by evidence in the code. Do not invent problems.
+
+                {f"Previous judge feedback: {feedback}\nUse that feedback to revise your analysis and fix any missed or incorrect issues.\n" if feedback else ""}
 
                 Return only valid JSON:
 
