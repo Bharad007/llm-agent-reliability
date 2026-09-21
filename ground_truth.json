@@ -1,0 +1,43 @@
+{
+  "snippets": [
+    {
+      "snippet_id": "scraper_001",
+      "source": "Own project - Amazon Scraper API (Express/Node.js)",
+      "description": "Express API wrapping ScraperAPI to fetch Amazon product details, reviews, offers, and search results.",
+      "known_bugs": [
+        {
+          "id": "scraper_001_bug_1",
+          "type": "syntax_error",
+          "description": "Missing slash in protocol - 'http:' instead of 'http://', producing a malformed URI that the request library rejects outright.",
+          "severity": "critical"
+        },
+        {
+          "id": "scraper_001_bug_2",
+          "type": "typo",
+          "description": "Hostname typo - 'scarperapi.com' instead of 'scraperapi.com', causing DNS/hostname resolution to fail.",
+          "severity": "critical"
+        },
+        {
+          "id": "scraper_001_bug_3",
+          "type": "logic_error",
+          "description": "Query parameter key mangled from 'api_key' to 'api.key'. Even with bugs 1 and 2 fixed, ScraperAPI would not recognize the key, causing a silent authentication failure rather than a crash.",
+          "severity": "high"
+        },
+        {
+          "id": "scraper_001_bug_4",
+          "type": "missing_validation",
+          "description": "No validation for a missing 'api_key' query parameter. The code silently builds a URL containing the literal string 'undefined' instead of failing fast with a clear 400 error.",
+          "severity": "medium"
+        },
+        {
+          "id": "scraper_001_bug_5",
+          "type": "error_handling",
+          "description": "All four route handlers use 'res.json(error)' in their catch blocks, which sends a 200 OK status (Express's default) alongside a raw internal error object. This breaks client-side error detection (clients checking response.ok would think the request succeeded) and leaks internal implementation details (library config, request options) to the caller - an information disclosure issue as well as a correctness bug.",
+          "severity": "high",
+          "note": "This bug is systemic - it appears identically across all 4 routes (/products/:productId, /products/:productId/reviews, /products/:productId/offers, /search/:searchQuery)."
+        }
+      ],
+      "correct_fix_summary": "Fix the protocol slash and hostname typo in generateScraperUrl; correct the query param key from 'api.key' back to 'api_key'; add a check that returns a 400 if api_key is missing; and in every catch block, log the full error server-side (console.error) while returning a minimal, intentional error shape to the client with an explicit non-200 status code (e.g. res.status(500).json({ error: '...' }))."
+    }
+  ]
+}
