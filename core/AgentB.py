@@ -3,7 +3,7 @@ import sys
 import json
 import anthropic
 from dotenv import load_dotenv
-from llm_json import request_json
+from core.llm_json import request_json
 
 load_dotenv()
 
@@ -20,11 +20,11 @@ def judge_agent_output(
     agent_a_report: dict,
     ground_truth: dict,
     max_attempts: int = 3
-) -> dict:
+) -> dict:  
     prompt = f"""
     You are evaluating the quality of a code-analysis agent.
     Compare Agent A's report against the ground truth.
-
+    
     Evaluate:
     1. Correctness: 
         Are Agent A's explanations and bug descriptions factually accurate?
@@ -34,8 +34,15 @@ def judge_agent_output(
         Consider equivalent descriptions as matches even if the wording differs.
     3. Feedback
         Explain which bugs were correctly identified, which were missed.
-        Mention false positives separately.
-
+        Definitions - use these precisely, do not blend them:
+        - "False positive": a claim inn Agent A's report that is factually WRONG or NOt supported by the acutal code (e.g. a claim in Agent A's report that doesn't exist, or misdiagnosing the cause.)
+        - "Additional findging": a claim that IS accurate and supported by the code, but is not 
+          one of the ground-truth bugs (e.g. a valid code-quality or security observation outside 
+          the known bug list). This is NOT a false positive and should not be penalized as one.
+    
+    Label each extra item Agent A raised as either a false positive or an additional finding, 
+    using the definitions above. Do not use the terms interchangeably.
+    
     Return only valid JSON in this exact shape:
 
     {{

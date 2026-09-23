@@ -1,6 +1,6 @@
 import json
-from AgentA import agentic_code_evaluation
-from AgentB import judge_agent_output
+from core.AgentA import agentic_code_evaluation
+from core.AgentB import judge_agent_output
 
 MAX_ITERATIONS = 3
 
