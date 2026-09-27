@@ -38,6 +38,20 @@
         }
       ],
       "correct_fix_summary": "Fix the protocol slash and hostname typo in generateScraperUrl; correct the query param key from 'api.key' back to 'api_key'; add a check that returns a 400 if api_key is missing; and in every catch block, log the full error server-side (console.error) while returning a minimal, intentional error shape to the client with an explicit non-200 status code (e.g. res.status(500).json({ error: '...' }))."
+    },
+    {
+      "snippet_id": "split_001",
+      "source": "TheAlgorithms/Python - strings/split.py (issue #14649, open at time of writing, no merged fix yet)",
+      "description": "Custom string split() implementation that splits a string on a given separator, defaulting to a space.",
+      "known_bugs": [
+        {
+          "id": "split_001_bug_1",
+          "type": "logic_error",
+          "description": "The comparison 'if char == separator' checks a single character from the input string against the full separator string. A single character can never equal a multi-character string, so multi-character separators (e.g. '--') never match. The function silently returns the input as a single unsplit element instead of splitting correctly or raising an error.",
+          "severity": "high"
+        }
+      ],
+      "correct_fix_summary": "Either (a) validate separator length up front and raise a ValueError if it isn't exactly one character, explicitly documenting the function as single-character-only, or (b) rewrite the matching logic to compare substrings of length len(separator) at each position (string[i:i+len(separator)] == separator) so multi-character separators are actually supported. These are two different, non-interchangeable design decisions - pick one and document which behavior is intended."
     }
   ]
 }
