@@ -3,7 +3,7 @@ import sys
 import json
 import anthropic
 from dotenv import load_dotenv
-from core.llm_json import request_json
+from llm_json import request_json
 
 load_dotenv()
 

@@ -1,8 +1,10 @@
 import json
-from core.AgentA import agentic_code_evaluation
-from core.AgentB import judge_agent_output
+from pathlib import Path
+from AgentA import agentic_code_evaluation
+from AgentB import judge_agent_output
 
 MAX_ITERATIONS = 3
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def run_review_loop(code_str: str, ground_truth: dict) -> dict:
@@ -35,12 +37,15 @@ def run_review_loop(code_str: str, ground_truth: dict) -> dict:
 
 
 if __name__ == "__main__":
-    with open("snippets/scraper_001.js", "r", encoding="utf-8") as file:
+    snippet_path = PROJECT_ROOT / "snippets" / "split_001.py"
+    ground_truth_path = PROJECT_ROOT / "ground_truth.json"
+
+    with snippet_path.open("r", encoding="utf-8") as file:
         code_str = file.read()
 
-    with open("ground_truth.json", "r", encoding="utf-8") as file:
+    with ground_truth_path.open("r", encoding="utf-8") as file:
         gt_data = json.load(file)
-        ground_truth = next(s for s in gt_data["snippets"] if s["snippet_id"] == "scraper_001")
+        ground_truth = next(s for s in gt_data["snippets"] if s["snippet_id"] == "split_001")
 
     result = run_review_loop(code_str, ground_truth)
     print(json.dumps(result, indent=2))
