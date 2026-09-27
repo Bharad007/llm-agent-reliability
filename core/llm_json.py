@@ -1,4 +1,6 @@
 import json
+import time 
+import anthropic
 from collections.abc import Callable
 from typing import Any
 
@@ -17,12 +19,26 @@ def extract_json(raw_text: str) -> str:
 def request_json(
     request: Callable[[], Any],
     max_attempts: int = 3,
+    retry_delay_seconds: float = 1.0,
 ) -> dict:
     last_raw_output = None
+    last_error = None
 
-    for _ in range(max_attempts):
-        message = request()
-        raw_output = "".join(
+    for attempt in range(max_attempts):
+        try:
+            message = request()
+        except (
+            anthropic.APIConnectionError,
+            anthropic.RateLimitError,
+            anthropic.APIStatusError,
+            anthropic.APITimeoutError,
+        ) as api_error:
+            last_error = f"{type(api_error).__name__}: {api_error}"
+            if attempt < max_attempts - 1:
+                time.sleep(retry_delay_seconds)
+            continue
+
+        raw_output = " ".join(
             block.text
             for block in message.content
             if getattr(block, "type", None) == "text"
@@ -38,6 +54,7 @@ def request_json(
             continue
 
     return {
-        "error": f"Failed to parse JSON after {max_attempts} attempts.",
+        "error": f"Failed after {max_attempts} attempts.",
         "last_raw_output": last_raw_output,
+        "last_api_error": last_error,
     }
