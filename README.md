@@ -120,91 +120,42 @@ The program prints iteration details and ultimately returns a final result with 
 - `approved`
 - `max_iterations_reached`
 
-## Commit milestones and functionality mapping
+## Known limitation: feedback-induced fabrication
 
-These are the milestone commit names to use as the project evolves. They help you track which functionality was added in each commit.
+### Observed behavior
 
-### 1) Initial setup
+When Agent B's feedback names a specific issue that Agent A missed, Agent A may fail to verify that claim against the source code. In testing, a fictional Unicode-normalization bug was planted in the ground truth. Agent A then produced a detailed, plausible bug report and suggested fix for an issue that was not present in the code.
 
-**Suggested commit name:**
+### Attempted mitigation and result
 
-```bash
-git commit -m "Initial project setup for LLM code review agents"
-```
+Agent A's prompt was updated to tell it to verify feedback against the code before including a claim and to say when it cannot verify one. This was insufficient: Agent A produced verification-shaped language (for example, claiming that the function performed no normalization) without establishing that the supposed issue was actually a bug. The absence of a feature was treated as evidence of a defect.
 
-**Functionality:**
-- repository scaffolding
-- project folders
-- initial code review exploration
-- basic environment setup
+### Root cause
 
-### 2) Basic Agent A review flow
+An LLM can follow the surface form of an instruction—such as writing text that sounds like verification—without reliably performing the intended evidence-based reasoning. Prompt-level self-verification is therefore not a dependable guardrail against feedback-induced fabrication.
 
-**Suggested commit name:**
+### Possible stronger mitigations (not implemented; out of scope for v1)
 
-```bash
-git commit -m "Add Agent A code review analysis flow"
-```
+- Strip specific bug descriptions from Agent B's feedback so Agent A must re-analyze the code independently. This may reduce anchoring but also makes legitimate missed issues harder to guide Agent A toward.
+- Require line-level source citations for each claimed bug and verify those citations programmatically against the actual source. This would add an external check that does not rely on the model's own assertion that it verified a claim.
 
-**Functionality:**
-- reads source code
-- sends the code to Claude
-- explains the code's intent
-- identifies bugs and fixes
-- returns structured JSON output
+## Commit history and functionality
 
-### 3) Agent B judge implementation
+This timeline uses the commit subjects, dates, and abbreviated hashes from this repository's Git history.
 
-**Suggested commit name:**
+| Date | Commit | Functionality |
+| --- | --- | --- |
+| 2026-09-21 | `7280a06` — `Basic framework` | Created the initial README. |
+| 2026-09-21 | `0265af4` — `Basic framework` | Added the initial Agent A and Agent B implementations, JSON helper, source examples, ground truth, and `.gitignore`. |
+| 2026-09-22 | `e4c08ab` — `Added multi-agent code review pipeline with judge loop` | Added the first orchestration loop and scraper snippet; Agent A was adjusted to accept judge feedback. |
+| 2026-09-23 | `1631e1e` — `Major Commit #1 refer to the README.md` | Reorganized the project into `core/` and `initial_testing/`, added the shared JSON helper and review loop under `core/`, and added a revision test. |
+| 2026-09-27 | `a4df96e` — `Added Snippet #2` | Updated the core runner and agent integration for the second evaluation snippet. |
+| 2026-09-27 | `d589480` — `Added Snippet #2` | Added `split_001.py` and its ground-truth entry. |
+| 2026-09-27 | `0385cab` — `tested api_error handling` | Improved shared LLM JSON/API error handling and added an API-error test. |
 
-```bash
-git commit -m "Add Agent B judge for grading Agent A output"
-```
+### `Add feedback verification and stalled-loop detection`
 
-**Functionality:**
-- compares Agent A output to `ground_truth.json`
-- returns correctness/completeness scores
-- emits approve/revise verdict
-- provides feedback for revision
-
-### 4) Shared JSON recovery layer
-
-**Suggested commit name:**
-
-```bash
-git commit -m "Add shared JSON parsing and retry helper"
-```
-
-**Functionality:**
-- strips Markdown fences from model output
-- retries malformed JSON responses
-- prevents crashes on bad LLM output
-
-### 5) Revision loop orchestration
-
-**Suggested commit name:**
-
-```bash
-git commit -m "Add multi-agent code review pipeline with judge loop"
-```
-
-**Functionality:**
-- runs Agent A and Agent B together
-- reuses judge feedback for revision
-- stops when approved or max iterations are reached
-
-### 6) Final project packaging
-
-**Suggested commit name:**
-
-```bash
-git commit -m "Finalize multi-agent code review system and documentation"
-```
-
-**Functionality:**
-- final architecture cleanup
-- documentation updates
-- final validation of the review loop
+On 2026-09-29, Agent A's prompt was updated to require checking judge feedback against the source code before incorporating it. The review loop was also updated to detect when judge scores stopped improving, and `ground_truth_test_stall.json` was added to exercise that behavior.
 
 ## Notes
 

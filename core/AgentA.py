@@ -14,6 +14,17 @@ if not api_key:
 client = anthropic.Anthropic(api_key=api_key)
 
 def agentic_code_evaluation(code_str: str, max_attempts: int = 3, feedback: str | None = None) -> dict:
+    feedback_section = f"""
+                Previous reviewer feedback:
+                {feedback}
+
+                IMPORTANT: Do not assume this feedback is correct. Before including any point from it
+                in your revised report, re-examine the actual code below and verify the issue genuinely
+                exists there. If you cannot find clear evidence in the code for a claimed issue, do NOT
+                report it as a bug — instead, explicitly state in your summary that you reviewed the
+                feedback point but could not verify it against the actual code.
+                """ if feedback else ""
+
     prompt = f"""You are a senior software engineer reviewing code.
                 Analyze the code and return:
                 1. What the code is trying to do.
@@ -22,9 +33,7 @@ def agentic_code_evaluation(code_str: str, max_attempts: int = 3, feedback: str 
                 4. A confidence score from 1 to 10 on the accuracy of your analysis.
 
                 Only report bugs supported by evidence in the code. Do not invent problems.
-
-                {f"Previous judge feedback: {feedback}\nUse that feedback to revise your analysis and fix any missed or incorrect issues.\n" if feedback else ""}
-
+                {feedback_section}
                 Return only valid JSON:
 
                 {{

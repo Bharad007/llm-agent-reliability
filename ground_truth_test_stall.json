@@ -1,0 +1,64 @@
+{
+  "snippets": [
+    {
+      "snippet_id": "scraper_001",
+      "source": "Own project - Amazon Scraper API (Express/Node.js)",
+      "description": "Express API wrapping ScraperAPI to fetch Amazon product details, reviews, offers, and search results.",
+      "known_bugs": [
+        {
+          "id": "scraper_001_bug_1",
+          "type": "syntax_error",
+          "description": "Missing slash in protocol - 'http:' instead of 'http://', producing a malformed URI that the request library rejects outright.",
+          "severity": "critical"
+        },
+        {
+          "id": "scraper_001_bug_2",
+          "type": "typo",
+          "description": "Hostname typo - 'scarperapi.com' instead of 'scraperapi.com', causing DNS/hostname resolution to fail.",
+          "severity": "critical"
+        },
+        {
+          "id": "scraper_001_bug_3",
+          "type": "logic_error",
+          "description": "Query parameter key mangled from 'api_key' to 'api.key'. Even with bugs 1 and 2 fixed, ScraperAPI would not recognize the key, causing a silent authentication failure rather than a crash.",
+          "severity": "high"
+        },
+        {
+          "id": "scraper_001_bug_4",
+          "type": "missing_validation",
+          "description": "No validation for a missing 'api_key' query parameter. The code silently builds a URL containing the literal string 'undefined' instead of failing fast with a clear 400 error.",
+          "severity": "medium"
+        },
+        {
+          "id": "scraper_001_bug_5",
+          "type": "error_handling",
+          "description": "All four route handlers use 'res.json(error)' in their catch blocks, which sends a 200 OK status (Express's default) alongside a raw internal error object. This breaks client-side error detection (clients checking response.ok would think the request succeeded) and leaks internal implementation details (library config, request options) to the caller - an information disclosure issue as well as a correctness bug.",
+          "severity": "high",
+          "note": "This bug is systemic - it appears identically across all 4 routes (/products/:productId, /products/:productId/reviews, /products/:productId/offers, /search/:searchQuery)."
+        }
+      ],
+      "correct_fix_summary": "Fix the protocol slash and hostname typo in generateScraperUrl; correct the query param key from 'api.key' back to 'api_key'; add a check that returns a 400 if api_key is missing; and in every catch block, log the full error server-side (console.error) while returning a minimal, intentional error shape to the client with an explicit non-200 status code (e.g. res.status(500).json({ error: '...' }))."
+    },
+    {
+      "snippet_id": "split_001",
+      "source": "TheAlgorithms/Python - strings/split.py (issue #14649, open at time of writing, no merged fix yet)",
+      "description": "Custom string split() implementation that splits a string on a given separator, defaulting to a space.",
+      "known_bugs": [
+        {
+          "id": "split_001_bug_1",
+          "type": "logic_error",
+          "description": "The comparison 'if char == separator' checks a single character from the input string against the full separator string. A single character can never equal a multi-character string, so multi-character separators (e.g. '--') never match. The function silently returns the input as a single unsplit element instead of splitting correctly or raising an error.",
+          "severity": "high"
+        },
+        {
+          "id": "split_001_bug_2",
+          "type": "logic_error",
+          "description": "The function does not handle Unicode normalization differences between the separator and string characters (e.g. NFC vs NFD forms), causing valid separators to be silently missed.",
+          "severity": "medium"
+
+        }
+      ],
+      "correct_fix_summary": "Either (a) validate separator length up front and raise a ValueError if it isn't exactly one character, explicitly documenting the function as single-character-only, or (b) rewrite the matching logic to compare substrings of length len(separator) at each position (string[i:i+len(separator)] == separator) so multi-character separators are actually supported. These are two different, non-interchangeable design decisions - pick one and document which behavior is intended."
+    }
+  ]
+}

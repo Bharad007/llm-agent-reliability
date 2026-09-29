@@ -11,6 +11,7 @@ def run_review_loop(code_str: str, ground_truth: dict) -> dict:
     feedback = None
     a_result = None
     b_result = None
+    prev_scores = None
 
     for iteration in range(1, MAX_ITERATIONS + 1):
         print(f"Iteration {iteration}: feedback={feedback}")
@@ -26,6 +27,16 @@ def run_review_loop(code_str: str, ground_truth: dict) -> dict:
                 "agent_b_review": b_result,
             }
 
+        current_scores = (b_result.get("correctness_score", 0), b_result.get("completeness_score", 0))
+        if prev_scores is not None and current_scores <= prev_scores:
+            return {
+                "status": "stalled",
+                "iterations": iteration,
+                "agent_a_report": a_result,
+                "agent_b_report": b_result,
+            }
+
+        prev_scores = current_scores
         feedback = b_result.get("feedback")
 
     return {
